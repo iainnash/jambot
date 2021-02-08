@@ -1,0 +1,21 @@
+{
+  "name": "eth-ourpool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "node-telegram-bot-api": "^0.51.0",
+    "serverless-http": "^2.7.0",
+    "serverless-secrets-plugin": "^0.1.0"
+  },
+  "devDependencies": {
+    "serverless-plugin-include-dependencies": "^4.1.0"
+  }
+}
