@@ -1,23 +1,27 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { top100, getCoinsToTrade } = require('./uniswap-data');
+const { TOKEN } = require('../config');
+const { handleCommand } = require('./commands');
 
-const TOKEN = process.env.TELEGRAM_BOT_API_KEY;
-const USE_POLLING = process.env.USE_POLLING;
-
-const bot = new TelegramBot(TOKEN, { polling: !!USE_POLLING });
+const bot = new TelegramBot(TOKEN, {});
 
 bot.on('message', async(msg) => {
+    if (msg.entities && msg.entities.some((e) => e.type === "bot_command")) {
+        await handleCommand(msg, bot);
+        return;
+    }
     if (msg.message && msg.message.indexOf('top100') !== -1) {
         await sendTop100(msg);
         return;
     }
     await bot.sendMessage(msg.chat.id, JSON.stringify(msg));
+
 });
 
 async function sendTop100(msg) {
     const res = await top100({ skip: 0 });
     console.log('has response: ')
-    console.log(res)
+    console.log(res);
     const resp = res.tokens.map((line) => `$${line.symbol} ${line.name} US$${parseInt(line.tradeVolumeUSD).toLocaleString()}`).join('\n')
     await bot.sendMessage(msg.chat.id, resp);
 }
@@ -33,14 +37,24 @@ bot.on('inline_query', async(inline_query) => {
             id: line.id,
             description: line.description,
             title: line.title,
-            input_message_content: { message_text: '$TEST' },
+            input_message_content: { message_text: `Proposal: BUY $${line.symbol}` },
+            _symbol: line.symbol,
             reply_markup: {
                 inline_keyboard: [
-                    { text: `Buy $${line.symbol}` },
-                    { text: `Sell $${line.symbol}` },
+                    [
+                        // TODO: automatically determine based off portfolio
+                        { text: `Propose buy $${line.symbol}`, callback_data: `buy:${line.symbol}` },
+                        { text: `Propose sell $${line.symbol}`, callback_data: `buy:${line.symbol}` },
+                    ]
                 ],
             },
-        }))
+        })).filter((line) => {
+            if (!inline_query.query || !inline_query.query.length) {
+                return true;
+            }
+            console.log(line._symbol)
+            return line._symbol.toLowerCase().indexOf(inline_query.query.toLowerCase()) === 0
+        }).slice(0, 50)
     );
 });
 
