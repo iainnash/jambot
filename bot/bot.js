@@ -14,7 +14,7 @@ bot.on('message', async(msg) => {
         await sendTop100(msg);
         return;
     }
-    await bot.sendMessage(msg.chat.id, JSON.stringify(msg));
+    // await bot.sendMessage(msg.chat.id, JSON.stringify(msg));
 
 });
 
