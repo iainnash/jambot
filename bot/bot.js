@@ -27,7 +27,6 @@ async function sendTop100(msg) {
 }
 
 bot.on('inline_query', async(inline_query) => {
-    console.log('has inline query', inline_query);
     const coins = await getCoinsToTrade();
 
     await bot.answerInlineQuery(
@@ -37,17 +36,16 @@ bot.on('inline_query', async(inline_query) => {
             id: line.id,
             description: line.description,
             title: line.title,
-            input_message_content: { message_text: `Proposal: BUY $${line.symbol}` },
+            input_message_content: { message_text: `/suggest BUY $${line.symbol}` },
             _symbol: line.symbol,
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        // TODO: automatically determine based off portfolio
-                        { text: `Propose buy $${line.symbol}`, callback_data: `buy:${line.symbol}` },
-                        { text: `Propose sell $${line.symbol}`, callback_data: `buy:${line.symbol}` },
-                    ]
-                ],
-            },
+            //reply_markup: { inline_keyboard: [
+            //        [
+            //            // TODO: automatically determine based off portfolio
+            //            { text: `Propose buy $${line.symbol}`, callback_data: `buy:${line.symbol}` },
+            //            { text: `Propose sell $${line.symbol}`, callback_data: `buy:${line.symbol}` },
+            //        ]
+            //    ],
+            //},
         })).filter((line) => {
             if (!inline_query.query || !inline_query.query.length) {
                 return true;

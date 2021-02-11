@@ -11,6 +11,14 @@ provider:
   runtime: nodejs12.x
   lambdaHashingVersion: 20201221
   region: us-east-2
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: "*"
 
 
 # you can overwrite defaults here
@@ -61,6 +69,8 @@ functions:
     handler: handler.handler
     environment:
       TELEGRAM_BOT_API_KEY: ${self:custom.secrets.TELEGRAM_BOT_API_KEY}
+      WALLET_ADDRESS: ${self:custom.secrets.WALLET_ADDRESS}
+      ETHERSCAN_API_KEY: ${self:custom.secrets.ETHERSCAN_API_KEY}
     events:
       - http: ANY /
       - http: POST {proxy+}
@@ -99,8 +109,50 @@ functions:
 #      variable2: value2
 
 # you can add CloudFormation resource templates here
-#resources:
-#  Resources:
+resources:
+  Resources:
+    CoinsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+           AttributeName: "id"
+           AttributeType: "S"
+        KeySchema:
+          -
+           AttributeName: "id"
+           KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: "coins"
+    PollsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+           AttributeName: "id"
+           AttributeType: "S"
+          -
+           AttributeName: "date"
+           AttributeType: "S"
+        KeySchema:
+          -
+           AttributeName: "id"
+           KeyType: "HASH"
+          -
+           AttributeName: "date"
+           KeyType: "RANGE"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: "polls"
 #    NewResource:
 #      Type: AWS::S3::Bucket
 #      Properties:

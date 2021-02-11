@@ -1,8 +1,10 @@
 const fs = require('fs');
 // TODO: move to shell script
 const config_file = fs.readFileSync('./secrets.dev.yml', 'utf8');
-const token = config_file.split(': ')[1].replace(/[\n ]/g, '');
-process.env.TELEGRAM_BOT_API_KEY = token;
+config_file.split("\n").map((el) => {
+    const [key, value] = el.split(": ")
+    process.env[key] = value.replace(/[\n ]/g, '');
+})
 
 // run bot
 const app = require('./express-bot-app')

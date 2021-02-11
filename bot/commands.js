@@ -1,9 +1,14 @@
+const db = require('../db/tokens');
+const { getHoldings } = require('./etherscan-data');
+
 const COMMANDS = {
     // vote on coins
     vote: {
         description: "Start voting on moves (admins only)",
-        handler: (bot, msg) => {
-            const options = ["Buy $PARIS", "Sell $1INCH", "Buy $SONAR"];
+        handler: async(bot, msg) => {
+            const voteOptions = await db.getVote();
+            const options = voteOptions.map((o) => JSON.stringify(o)).slice(10);
+            // const options = ["Buy $PARIS", "Sell $1INCH", "Buy $SONAR"];
             bot.sendPoll(msg.chat.id, "Moves to make", options, {
                 multiple: true,
                 is_anonymous: false,
@@ -16,7 +21,19 @@ const COMMANDS = {
             await bot.sendMessage(msg.chat.id, "Bot commands: \n" + Object.keys(COMMANDS).map((l) => `/${l}`).join(" \n"));
         }
     },
-    // dm admin link
+    suggest: {
+        description: "Suggest trade (buy/sell) token",
+        handler: async(bot, msg, cmds) => {
+            console.log('has cmds', cmds, JSON.stringify(cmds.split(' ')));
+            if (cmds.split(' ').length < 2) {
+                await bot.sendMessage(msg.chat.id, 'Syntax: "/suggest BUY/SELL TOKEN"');
+                return
+            }
+            const [action, token] = cmds.split(' ');
+            await db.addTokenVote(token.toLowerCase(), action.toLowerCase());
+            await bot.sendMessage(msg.chat.id, `Placed vote to ${action} ${token}`);
+        },
+    },
     execute: {
         description: "Execute trades (admins only)",
         handler: async(bot, msg) => {
@@ -26,7 +43,13 @@ const COMMANDS = {
     portfolio: {
         description: "Get current portfolio",
         handler: async(bot, msg) => {
-            await bot.sendMessage(msg.chat.id, "PLACEHOLDER (current portfolio)");
+            const holdings = await getHoldings();
+            const tokenHoldings = await getTokenHoldings()
+            const coinDeltas = await getCoinDeltas(tokenHoldings);
+            const res = coinDeltas.filter((a) => a.now && a.boughtAt).map((delta) => {
+                return `${delta.tokenSymbol} @ ${delta.value.decimalPlaces(4).toString()} %: ${new BigDecimal(delta.now).div(new BigDecimal(delta.boughtAt)).dp(5).toString()}`
+            }).join("\n")
+            await bot.sendMessage(msg.chat.id, "Portfolio:\n" + res.join("\n"));
         },
     },
     performance: {
