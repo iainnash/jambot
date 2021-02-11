@@ -19,11 +19,19 @@ module.exports.getVote = async() => {
     let result = await docClient.scan({
         TableName: "polls",
     }).promise();
-    console.log('has vote result', result)
-    return result;
+    return result.Items;
 }
 
 module.exports.clearVote = async() => {
     const votes = await module.exports.getVote();
-    await docClient.delete(votes.map((vote) => vote.id))
+    await votes.forEach(async({ id }) => {
+        console.log('deleting', id)
+        const r = await docClient.delete({
+            TableName: "polls",
+            Key: {
+                id
+            }
+        }).promise();
+        console.log(r);
+    })
 };

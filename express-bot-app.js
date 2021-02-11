@@ -1,10 +1,12 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const { getEthHoldings, getTokenHoldings } = require('./bot/etherscan-data');
-const { getCoinDeltas } = require('./bot/uniswap-data');
+const { getTokenHoldings } = require("./bot/etherscan-data");
+const { getVote } = require("./db/tokens");
+const { getActionVotes } = require("./db/votes");
+const { getCoinDeltas } = require("./bot/uniswap-data");
 
 const { bot } = require("./bot/bot");
-const { getCommandsText } = require('./bot/commands');
+const { getCommandsText } = require("./bot/commands");
 const { APP_URL, TOKEN } = require("./config");
 
 const app = express();
@@ -26,17 +28,32 @@ app.get("/", function(req, res) {
     res.send("Hello World!");
 });
 
+app.get('/votes', async(req, res) => {
+    try {
+        const tokenHoldings = await getActionVotes();
+        res.send({ tokenHoldings });
+    } catch (e) {
+        console.error(e);
+        res.send({ error: true });
+    }
+})
+
 app.get("/balances", async function(req, res) {
     // res.send({ eth: await getEthHoldings(), token: await getTokenHoldings() });
     try {
-        const tokenHoldings = await getTokenHoldings()
+        const tokenHoldings = await getTokenHoldings();
         const coinDeltas = await getCoinDeltas(tokenHoldings);
         res.send({ coinDeltas });
     } catch (e) {
         console.error(e);
-        res.send({ error: true })
+        res.send({ error: true });
     }
-})
+});
+
+app.get("/votes", async function(req, res) {
+    const vote = await getVote();
+    res.send(vote);
+});
 
 app.get("/setup", (req, res) => {
     bot
@@ -44,7 +61,7 @@ app.get("/setup", (req, res) => {
         .then((resp) => {
             bot.setMyCommands(getCommandsText()).then(() => {
                 res.send(`set webhook with app url base: ${APP_URL}`);
-            })
+            });
         })
         .catch((err) => {
             console.log(err);

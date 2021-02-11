@@ -129,7 +129,7 @@ resources:
         StreamSpecification:
           StreamViewType: "NEW_AND_OLD_IMAGES"
         TableName: "coins"
-    PollsDynamoDbTable:
+    PollsTableDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
       Properties:
@@ -137,22 +137,34 @@ resources:
           -
            AttributeName: "id"
            AttributeType: "S"
-          -
-           AttributeName: "date"
-           AttributeType: "S"
         KeySchema:
           -
            AttributeName: "id"
            KeyType: "HASH"
-          -
-           AttributeName: "date"
-           KeyType: "RANGE"
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         StreamSpecification:
           StreamViewType: "NEW_AND_OLD_IMAGES"
         TableName: "polls"
+    VotesTableDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+           AttributeName: "id"
+           AttributeType: "S"
+        KeySchema:
+          -
+           AttributeName: "id"
+           KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: "votes"
 #    NewResource:
 #      Type: AWS::S3::Bucket
 #      Properties:

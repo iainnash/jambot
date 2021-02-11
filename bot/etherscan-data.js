@@ -7,6 +7,7 @@ async function getTokenHoldings() {
             `https://api.etherscan.io/api?module=account&action=tokentx&address=${WALLET_ADDRESS}&page=1&offset=0&sort=asc&apikey=${ETHERSCAN_API_KEY}`
         )
         .then((r) => r.json())
+    console.log('has address' + WALLET_ADDRESS)
     console.log(response)
     const holdings = [];
     const tokenData = {};

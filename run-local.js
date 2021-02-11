@@ -3,7 +3,7 @@ const fs = require('fs');
 const config_file = fs.readFileSync('./secrets.dev.yml', 'utf8');
 config_file.split("\n").map((el) => {
     const [key, value] = el.split(": ")
-    process.env[key] = value.replace(/[\n ]/g, '');
+    process.env[key] = value.replace(/["'\n ]/g, '');
 })
 
 // run bot

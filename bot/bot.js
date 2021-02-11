@@ -2,6 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const { top100, getCoinsToTrade } = require('./uniswap-data');
 const { TOKEN } = require('../config');
 const { handleCommand } = require('./commands');
+const { updateVote } = require('../db/votes');
 
 const bot = new TelegramBot(TOKEN, {});
 
@@ -56,8 +57,9 @@ bot.on('inline_query', async(inline_query) => {
     );
 });
 
-bot.on('poll', async(msg) => {
-    console.log('has poll', msg);
+bot.on('poll', async(poll) => {
+    console.log("HAS POLL", poll)
+    await updateVote(poll);
 });
 
 module.exports = { bot };
