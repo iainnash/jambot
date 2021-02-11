@@ -27,7 +27,7 @@ const COMMANDS = {
                 msg.chat.id,
                 "Bot commands: \n" +
                 Object.keys(COMMANDS)
-                .map((l) => `/${l}`)
+                .map((l) => `/${l} (${COMMANDS[l].description})`)
                 .join(" \n")
             );
         },
