@@ -1,7 +1,8 @@
+const { THE_GRAPH_API_BASE } = require('../config');
 const graphql = require("graphql.js");
 
 const graph = graphql(
-    "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2", { asJSON: true, debug: true }
+    THE_GRAPH_API_BASE, { asJSON: true }
 );
 
 const top100 = graph(`query tokens($skip: Int!) {
@@ -23,6 +24,8 @@ async function getCoinDeltas(coins) {
         tokenSymbol
     }));
     queries.map((query) => {
+        // i know there's a better way to do this but the js graph API i'm using isn't correctly handling
+        // block number type requiring this sadness :(
         graph(`query {
             latest:token(id: "${query.contractAddress}", block: {number: ${query.blockNumber}}) {
                 derivedETH

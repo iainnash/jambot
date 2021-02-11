@@ -1,19 +1,32 @@
 const fetch = require("node-fetch");
-const BigNumber = require('bignumber.js');
-const { WALLET_ADDRESS, ETHERSCAN_API_KEY } = require("../config");
+const BigNumber = require("bignumber.js");
+const {
+    WALLET_ADDRESS,
+    ETHERSCAN_API_KEY,
+    ETHERSCAN_API_BASE,
+} = require("../config");
 
 async function getTokenHoldings() {
     const response = await fetch(
-            `https://api.etherscan.io/api?module=account&action=tokentx&address=${WALLET_ADDRESS}&page=1&offset=0&sort=asc&apikey=${ETHERSCAN_API_KEY}`
-        )
-        .then((r) => r.json())
-    console.log('has address' + WALLET_ADDRESS)
-    console.log(response)
+        `${ETHERSCAN_API_BASE}?module=account&action=tokentx&address=${WALLET_ADDRESS}&page=1&offset=0&sort=asc&apikey=${ETHERSCAN_API_KEY}`
+    ).then((r) => r.json());
+    console.log("has address" + WALLET_ADDRESS);
+    console.log(response);
     const holdings = [];
     const tokenData = {};
     const tokenHoldings = {};
     response.result.forEach((trade) => {
-        const { value, to, from, tokenName, blockNumber, blockHash, tokenSymbol, contractAddress, tokenDecimal } = trade;
+        const {
+            value,
+            to,
+            from,
+            tokenName,
+            blockNumber,
+            blockHash,
+            tokenSymbol,
+            contractAddress,
+            tokenDecimal,
+        } = trade;
         if (to.toLowerCase() === WALLET_ADDRESS.toLowerCase()) {
             holdings.push(trade);
             if (!tokenHoldings[tokenSymbol]) {
@@ -27,12 +40,14 @@ async function getTokenHoldings() {
                 };
             }
             const valueNumber = new BigNumber(value).shiftedBy(-1 * tokenDecimal);
-            tokenHoldings[tokenSymbol].value = tokenHoldings[tokenSymbol].value.plus(valueNumber);
+            tokenHoldings[tokenSymbol].value = tokenHoldings[tokenSymbol].value.plus(
+                valueNumber
+            );
             tokenData[contractAddress] = {
                 tokenName,
                 tokenSymbol,
-                tokenDecimal
-            }
+                tokenDecimal,
+            };
         }
         if (from.toLowerCase() === WALLET_ADDRESS.toLowerCase()) {
             // // yolo don't sell
@@ -48,9 +63,8 @@ async function getTokenHoldings() {
 
 async function getEthHoldings() {
     const walletAmount = await fetch(
-            `https://api.etherscan.io/api?module=account&action=balance&tag=latest&address=${WALLET_ADDRESS}&apikey=${ETHERSCAN_API_KEY}`
-        )
-        .then((r) => r.json());
+        `${ETHERSCAN_API_BASE}?module=account&action=balance&tag=latest&address=${WALLET_ADDRESS}&apikey=${ETHERSCAN_API_KEY}`
+    ).then((r) => r.json());
     const walletEth = new BigNumber(walletAmount.result).shiftedBy(-18);
     return walletEth;
 }
