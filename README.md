@@ -21,10 +21,13 @@ Example interactions:
 1. Vote
 
 2. Suggest
+<img src="images/placedVote.png" alt="placedVote" width="600"/>
 
 3. Ask Help
+<img src="images/help.png" alt="help" width="400"/>
 
 4. Portfolio
+<img src="images/portfolio.png" alt="portfolio" width="400"/>
 
 5. Performance
 
