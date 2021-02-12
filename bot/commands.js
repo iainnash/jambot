@@ -2,21 +2,35 @@ const BigNumber = require("bignumber.js");
 const db = require("../db/tokens");
 const { getTokenHoldings, getEthHoldings } = require("./etherscan-data");
 const { getCoinDeltas } = require("./uniswap-data");
+const { getCoinInfo } = require("../db/coinmarketcap");
+
+function onlyUnique(value, index, self) {
+    return self.indexOf(value) === index;
+}
 
 const COMMANDS = {
-    // vote on coins
     vote: {
         description: "Start voting on moves (admins only)",
         handler: async(bot, msg) => {
             const voteOptions = await db.getVote();
-            const options = voteOptions.map((option) => `${option.action} $${option.token}`)
+            const options = voteOptions
+                .map((option) => `${option.action} $${option.token}`)
+                .filter(onlyUnique)
+                .slice(0, 10);
             if (options.length < 2) {
-                await bot.sendMessage(msg.chat.id, "There need to be at least 2 proposed actions to start a vote!");
+                await bot.sendMessage(
+                    msg.chat.id,
+                    "There need to be at least one proposed action to start a vote!"
+                );
             }
-            await bot.sendPoll(msg.chat.id, "Moves to make", options, {
-                multiple: true,
-                is_anonymous: false,
-            });
+            await bot.sendPoll(
+                msg.chat.id,
+                "Moves to make", [...options, "Do nothing"], {
+                    multiple_choice: true,
+                    allows_multiple_answers: true,
+                    is_anonymous: false,
+                }
+            );
             await db.clearVote();
         },
     },
@@ -41,8 +55,21 @@ const COMMANDS = {
                 return;
             }
             const [_, action, token] = cmds.split(" ");
-            await db.addTokenVote(token.replace(/\$/, '').toLowerCase(), action.toLowerCase());
-            await bot.sendMessage(msg.chat.id, `Placed vote to ${action} $${token}`);
+            const tokenName = token.replace(/\$/, "").toLowerCase();
+            await db.addTokenVote(tokenName, action.toLowerCase());
+            await bot.sendMessage(
+                msg.chat.id,
+                `Placed suggestion to ${action} $${tokenName} for a vote`
+            );
+            try {
+                console.log({ tokenName });
+                const coinData = await getCoinInfo(tokenName);
+                console.log("has coin data", coinData);
+                const { description } = coinData[Object.keys(coinData)[0]];
+                await bot.sendMessage(msg.chat.id, `${description}`);
+            } catch (e) {
+                console.error(e);
+            }
         },
     },
     execute: {
@@ -63,10 +90,14 @@ const COMMANDS = {
                 const coinDeltas = await getCoinDeltas(tokenHoldings);
                 coinDeltas["ETH"] = { tokenSymbol: "ETH", value: holdings };
                 const res = Object.values(coinDeltas)
+                    .filter((a) => a.now && a.boughtAt)
                     .filter(
-                        (a) => a.now && a.boughtAt
+                        (a) =>
+                        a.tokenSymbol != "cDAI" &&
+                        a.tokenSymbol != "UNI" &&
+                        a.tokenSymbol !== "AST" &&
+                        a.tokenSymbol !== "KNC"
                     )
-                    .filter((a) => a.tokenSymbol != 'cDAI' && a.tokenSymbol != 'UNI' && a.tokenSymbol !== 'AST' && a.tokenSymbol !== 'KNC')
                     .map((delta) => {
                         return `${delta.tokenSymbol} @ ${delta.value
               .decimalPlaces(4)
@@ -89,10 +120,13 @@ const COMMANDS = {
             const tokenHoldings = await getTokenHoldings();
             const lines = [
                 `ETH Held: ${holdings.decimalPlaces(6).toString()}`,
-                ...Object.values(tokenHoldings).map((value) =>
-                    `${value.tokenSymbol} (${value.tokenName}): ${value.value.decimalPlaces(4).toString()}`
-                )
-            ].join("\n")
+                ...Object.values(tokenHoldings).map(
+                    (value) =>
+                    `${value.tokenSymbol} (${
+              value.tokenName
+            }): ${value.value.decimalPlaces(4).toString()}`
+                ),
+            ].join("\n");
             await bot.sendMessage(msg.chat.id, lines);
         },
     },
@@ -128,7 +162,7 @@ async function handleCommand(msg, bot) {
             try {
                 await runCommand.handler(bot, msg, argumentsText);
             } catch (e) {
-                console.log('has fatal error', e)
+                console.log("has fatal error", e);
                 await bot.sendMessage(msg.chat.id, "Error running " + commandText);
             }
         });

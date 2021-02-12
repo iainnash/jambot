@@ -1,4 +1,4 @@
-## OurPool! (bot)
+## JamBot! (bot)
 
 An Ethereum bot for voting on shared wallet actions.
 

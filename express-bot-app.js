@@ -24,13 +24,12 @@ app.post(`/${bot_url}`, (req, res) => {
     setTimeout(() => res.sendStatus(200), 600);
 });
 
-app.get("/", function(req, res) {
-    res.send("Hello World!");
-});
-
 app.get('/votes', async(req, res) => {
     try {
         const tokenHoldings = await getActionVotes();
+        res.set('Access-Control-Allow-Origin', '*')
+        res.set('Access-Control-Allow-Headers', 'Content-Type, Accept')
+        res.set('Access-Control-Allow-Methods', 'GET, OPTIONS')
         res.send({ tokenHoldings });
     } catch (e) {
         console.error(e);
@@ -39,20 +38,17 @@ app.get('/votes', async(req, res) => {
 })
 
 app.get("/balances", async function(req, res) {
-    // res.send({ eth: await getEthHoldings(), token: await getTokenHoldings() });
     try {
         const tokenHoldings = await getTokenHoldings();
         const coinDeltas = await getCoinDeltas(tokenHoldings);
+        res.set('Access-Control-Allow-Origin', '*')
+        res.set('Access-Control-Allow-Headers', 'Content-Type, Accept')
+        res.set('Access-Control-Allow-Methods', 'GET, OPTIONS')
         res.send({ coinDeltas });
     } catch (e) {
         console.error(e);
         res.send({ error: true });
     }
-});
-
-app.get("/votes", async function(req, res) {
-    const vote = await getVote();
-    res.send(vote);
 });
 
 app.get("/setup", (req, res) => {

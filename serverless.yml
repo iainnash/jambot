@@ -14,10 +14,7 @@ provider:
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
+        - dynamodb:*
       Resource: "*"
 
 
@@ -71,6 +68,7 @@ functions:
       TELEGRAM_BOT_API_KEY: ${self:custom.secrets.TELEGRAM_BOT_API_KEY}
       WALLET_ADDRESS: ${self:custom.secrets.WALLET_ADDRESS}
       ETHERSCAN_API_KEY: ${self:custom.secrets.ETHERSCAN_API_KEY}
+      COINMARKETCAP_API_KEY: ${self:custom.secrets.COINMARKETCAP_API_KEY}
     events:
       - http: ANY /
       - http: POST {proxy+}
